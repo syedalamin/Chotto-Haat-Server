@@ -16,15 +16,16 @@ datasource db {
 
 //* user
 model User {
-  id                 String     @id @unique @default(uuid())
-  email              String     @unique
+  id                 String      @id @unique @default(uuid())
+  email              String      @unique
   password           String
   role               UserRole
   needPasswordChange Boolean?    @default(true)
   status             UserStatus? @default(ACTIVE)
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt()
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt()
   admin              Admin?
+  customer           Customer?
 
   @@map("users")
 }
@@ -46,6 +47,23 @@ model Admin {
   user User @relation(fields: [email], references: [email])
 
   @@map("admins")
+}
+
+model Customer {
+  id            String   @id @default(uuid())
+  name          Json
+  email         String   @unique
+  profilePhoto  String?
+  contactNumber String
+  address       String?
+  gender        Gender?
+  isDeleted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [email], references: [email])
+
+  @@map("customer")
 }
 
 //! type

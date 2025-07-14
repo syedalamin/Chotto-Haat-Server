@@ -14,5 +14,12 @@ router.post(
   validateRequest(UserValidations.adminValidation),
   UserControllers.createAdmin
 );
+router.post(
+  "/create-customer",
+  upload.single("file"),
+  formDataParser,
+  validateRequest(UserValidations.customerValidation),
+  UserControllers.createCustomer
+);
 
 export const UserRoutes = router;

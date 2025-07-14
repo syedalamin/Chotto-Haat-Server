@@ -1,4 +1,4 @@
-import { Admin, UserRole } from "@prisma/client";
+import { Admin, Customer, UserRole } from "@prisma/client";
 import prisma from "../../../utils/share/prisma";
 import bcrypt from "bcrypt";
 import sendImageToCloudinary from "../../../utils/sendCloudinary";
@@ -47,6 +47,47 @@ const createAdmin = async (req: Request): Promise<Admin> => {
   return result;
 };
 
+const createCustomer = async (req: Request) => {
+  const isUserExist = await prisma.customer.findFirst({
+    where: {
+      email: req.body.customer.email,
+    },
+  });
+
+  if (req.file) {
+    const { secure_url } = (await sendImageToCloudinary(
+      req.file
+    )) as ICloudinaryUploadResponse;
+    req.body.customer.profilePhoto = secure_url;
+  }
+
+  if (isUserExist) {
+    throw new ApiError(status.CONFLICT, "Customer is Already Exists");
+  }
+
+  const hashedPassword = await bcrypt.hash(req.body.password, 12);
+  const userData = {
+    email: req.body.customer.email,
+    password: hashedPassword,
+    role: UserRole.CUSTOMER,
+  };
+
+  const result = await prisma.$transaction(async (transactionClient) => {
+    await transactionClient.user.create({
+      data: userData,
+    });
+
+    const createdCustomerData = await transactionClient.customer.create({
+      data: req.body.customer,
+    });
+
+    return createdCustomerData;
+  });
+
+  return result;
+};
+
 export const UserServices = {
   createAdmin,
+  createCustomer,
 };
