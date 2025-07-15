@@ -5,7 +5,7 @@ import ApiError from "../../../utils/share/apiError";
 import status from "http-status";
 import { Token, TTokenPayload } from "../../../utils/authToken/generateToken";
 import config from "../../../config";
-import { Secret } from "jsonwebtoken";
+import { JwtPayload, Secret } from "jsonwebtoken";
 type TLogin = {
   email: string;
   password: string;
@@ -87,7 +87,48 @@ const refreshToken = async (token: string) => {
     needPasswordChange: userData.needPasswordChange,
   };
 };
+
+const changePassword = async (
+  user: JwtPayload | undefined,
+  payload: { oldPassword: string; newPassword: string }
+) => {
+  const userData = await prisma.user.findFirstOrThrow({
+    where: {
+      email: user?.email,
+      status: UserStatus.ACTIVE,
+    },
+    select: {
+      password: true,
+    },
+  });
+
+  const isCorrectPassword: boolean = await bcrypt.compare(
+    payload.oldPassword,
+    userData.password
+  );
+
+  if (!isCorrectPassword) {
+    throw new ApiError(status.UNAUTHORIZED, "Password Do Not Match");
+  }
+
+  const hashedPassword: string = await bcrypt.hash(payload.newPassword, 12);
+
+  await prisma.user.update({
+    where: {
+      email: user?.email,
+    },
+    data: {
+      password: hashedPassword,
+      needPasswordChange: false,
+    },
+  });
+
+  return {
+    message: "Password Change Successfully",
+  };
+};
 export const AuthServices = {
   login,
   refreshToken,
+  changePassword,
 };
