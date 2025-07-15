@@ -5,6 +5,7 @@ import ApiError from "../../../utils/share/apiError";
 import status from "http-status";
 import { Token, TTokenPayload } from "../../../utils/authToken/generateToken";
 import config from "../../../config";
+import { Secret } from "jsonwebtoken";
 type TLogin = {
   email: string;
   password: string;
@@ -43,8 +44,6 @@ const login = async (payload: TLogin) => {
     config.jwt.refresh_Token_expires_in as string
   );
 
-  
-
   return {
     accessToken,
     refreshToken,
@@ -52,6 +51,43 @@ const login = async (payload: TLogin) => {
   };
 };
 
+const refreshToken = async (token: string) => {
+  const verifiedUser = Token.verifyToken(
+    token,
+    config.jwt.refresh_Token as Secret
+  );
+
+  if (!verifiedUser) {
+    throw new ApiError(status.UNAUTHORIZED, "You are not AuthorizedF");
+  }
+
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: verifiedUser.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  if (!userData) {
+    throw new ApiError(status.UNAUTHORIZED, "You are not authorized");
+  }
+
+  const tokenPayload: TTokenPayload = {
+    email: userData.email,
+    role: userData.role,
+  };
+  const accessToken = Token.generateToken(
+    tokenPayload,
+    config.jwt.access_Token as Secret,
+    config.jwt.access_Token_expires_in as string
+  );
+
+  return {
+    accessToken,
+    needPasswordChange: userData.needPasswordChange,
+  };
+};
 export const AuthServices = {
   login,
+  refreshToken,
 };

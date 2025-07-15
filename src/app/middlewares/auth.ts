@@ -5,6 +5,7 @@ import { Token } from "../../utils/authToken/generateToken";
 import config from "../../config";
 import { Secret } from "jsonwebtoken";
 import prisma from "../../utils/share/prisma";
+import { UserStatus } from "@prisma/client";
 
 const auth = (...roles: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -23,6 +24,7 @@ const auth = (...roles: string[]) => {
       const userData = await prisma.user.findUniqueOrThrow({
         where: {
           email: verifiedUser.email,
+          status: UserStatus.ACTIVE
         },
       });
       if (!userData) {
