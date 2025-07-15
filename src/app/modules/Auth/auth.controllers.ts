@@ -32,7 +32,7 @@ const refreshToken = catchAsync(async (req, res) => {
   });
 });
 const changePassword = catchAsync(async (req, res) => {
-  const user = req.user ;
+  const user = req.user;
 
   const result = await AuthServices.changePassword(user, req.body);
   sendResponse(res, {
@@ -41,9 +41,28 @@ const changePassword = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const forgetPassword = catchAsync(async (req, res) => {
+  const result = await AuthServices.forgetPassword(req.body);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Forget Password Send Successfully",
+    data: result,
+  });
+});
+const resetPassword = catchAsync(async (req, res) => {
+  const token = req.headers.authorization || "";
+  const result = await AuthServices.resetPassword(token, req.body);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Forget Password Send Successfully",
+    data: result,
+  });
+});
 
 export const AuthControllers = {
   login,
   refreshToken,
-  changePassword
+  changePassword,
+  forgetPassword,
+  resetPassword,
 };

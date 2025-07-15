@@ -21,10 +21,10 @@ const auth = (...roles: string[]) => {
       if (roles.length && !roles.includes(verifiedUser.role)) {
         throw new ApiError(status.FORBIDDEN, "Forbidden");
       }
-      const userData = await prisma.user.findUniqueOrThrow({
+      const userData = await prisma.user.findFirstOrThrow({
         where: {
           email: verifiedUser.email,
-          status: UserStatus.ACTIVE
+          status: UserStatus.ACTIVE,
         },
       });
       if (!userData) {
