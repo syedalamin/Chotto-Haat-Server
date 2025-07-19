@@ -13,9 +13,8 @@ CREATE TABLE "users" (
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "role" "UserRole" NOT NULL,
-    "needPasswordChange" BOOLEAN NOT NULL,
-    "status" "UserStatus" NOT NULL,
-    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "needPasswordChange" BOOLEAN DEFAULT true,
+    "status" "UserStatus" DEFAULT 'ACTIVE',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -25,17 +24,35 @@ CREATE TABLE "users" (
 -- CreateTable
 CREATE TABLE "admins" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "firstName" TEXT NOT NULL,
+    "lastName" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "profilePhoto" TEXT,
     "contactNumber" TEXT NOT NULL,
-    "address" TEXT NOT NULL,
-    "gender" "Gender" NOT NULL,
+    "address" TEXT,
+    "gender" "Gender",
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "admins_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "customer" (
+    "id" TEXT NOT NULL,
+    "firstName" TEXT NOT NULL,
+    "lastName" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "profilePhoto" TEXT,
+    "contactNumber" TEXT NOT NULL,
+    "address" TEXT,
+    "gender" "Gender",
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "customer_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -47,5 +64,11 @@ CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 -- CreateIndex
 CREATE UNIQUE INDEX "admins_email_key" ON "admins"("email");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "customer_email_key" ON "customer"("email");
+
 -- AddForeignKey
 ALTER TABLE "admins" ADD CONSTRAINT "admins_email_fkey" FOREIGN KEY ("email") REFERENCES "users"("email") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "customer" ADD CONSTRAINT "customer_email_fkey" FOREIGN KEY ("email") REFERENCES "users"("email") ON DELETE RESTRICT ON UPDATE CASCADE;
