@@ -2,8 +2,20 @@ import { Prisma } from "@prisma/client";
 import prisma from "../../../utils/share/prisma";
 import { IAdminFilterRequest } from "./admin.interface";
 import { adminSearchAbleFields } from "./admin.constants";
+import { IPaginationOptions } from "../../../interface/pagination";
 
-const getAllAdmins = async (filters: IAdminFilterRequest) => {
+const getAllAdmins = async (
+  filters: IAdminFilterRequest,
+  options: IPaginationOptions
+) => {
+  const page: number = Number(options.page) || 1;
+  const limit: number = Number(options.limit) || 2;
+  const skip: number = (page - 1) * limit;
+
+  const sortBy: string = options.sortBy || "createdAt";
+  const sortOrder: string = options.sortOrder || "desc";
+
+  // search
   const { searchTerm, ...filterData } = filters;
   const andConditions: Prisma.AdminWhereInput[] = [];
 
@@ -29,13 +41,11 @@ const getAllAdmins = async (filters: IAdminFilterRequest) => {
       })),
     });
   }
-
   // soft delete
 
   andConditions.push({
     isDeleted: false,
   });
-
   const whereConditions: Prisma.AdminWhereInput = {
     AND: andConditions,
   };
@@ -43,11 +53,29 @@ const getAllAdmins = async (filters: IAdminFilterRequest) => {
   // console.log(searchTerm, filterData)
   const results = await prisma.admin.findMany({
     where: whereConditions,
-    orderBy: {
-      createdAt: "desc",
-    },
+    skip,
+    take: limit,
+    orderBy:
+      sortBy && sortOrder
+        ? {
+            [sortBy]: sortOrder,
+          }
+        : {
+            createdAt: "desc",
+          },
   });
-  return results;
+
+  const total = await prisma.admin.count({
+    where: whereConditions,
+  });
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: results,
+  };
 };
 
 export const AdminServices = {
