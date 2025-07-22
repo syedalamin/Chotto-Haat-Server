@@ -1,61 +1,27 @@
-import { Prisma } from "@prisma/client";
+
 import prisma from "../../../utils/share/prisma";
 import { IAdminFilterRequest } from "./admin.interface";
 import { adminSearchAbleFields } from "./admin.constants";
-import { IPaginationOptions, ISortOrder } from "../../../interface/pagination";
+import { IPaginationOptions } from "../../../interface/pagination";
+import {
+  allowedAdminSortFields,
+  allowedSortOrder,
+} from "../../../utils/pagination/pagination";
+import { buildSearchAndFilterCondition } from "../../../utils/search/buildSearchAndFilterCondition";
+import { buildSortCondition } from "../../../utils/search/buildSortCondition";
 
 const getAllAdmins = async (
   filters: IAdminFilterRequest,
   options: IPaginationOptions
 ) => {
-  
-  const page: number = Number(options.page) || 1;
-  const limit: number = Number(options.limit) || 2;
-  const skip: number = (page - 1) * limit;
-
-  const allowedSortFields = ["LastName", "email"];
-  const allowedSortOrder = ["asc", "desc"];
-
-  const sortBy: string = allowedSortFields.includes(options.sortBy || "")
-    ? options.sortBy!
-    : "createdAt";
-
-  const sortOrder: ISortOrder  = allowedSortOrder.includes(options.sortOrder || '')? options.sortOrder! as ISortOrder : "desc";
-
+  const { limit, page, skip, sortBy, sortOrder } = buildSortCondition(
+    options,
+    allowedAdminSortFields,
+    allowedSortOrder
+  );
   // search
-  const { searchTerm, ...filterData } = filters;
-  const andConditions: Prisma.AdminWhereInput[] = [];
 
-  // searchTerm
-  if (searchTerm) {
-    andConditions.push({
-      OR: adminSearchAbleFields.map((field) => ({
-        [field]: {
-          contains: searchTerm,
-          mode: "insensitive",
-        },
-      })),
-    });
-  }
-  // filter
-  if (Object.keys(filterData).length > 0) {
-    andConditions.push({
-      AND: Object.entries(filterData).map(([key, value]) => ({
-        [key]: {
-          equals: value,
-          mode: "insensitive",
-        },
-      })),
-    });
-  }
-  // soft delete
-
-  andConditions.push({
-    isDeleted: false,
-  });
-  const whereConditions: Prisma.AdminWhereInput = {
-    AND: andConditions,
-  };
+  const whereConditions = buildSearchAndFilterCondition<IAdminFilterRequest>(filters, adminSearchAbleFields);
 
   // console.log(searchTerm, filterData)
   const results = await prisma.admin.findMany({
