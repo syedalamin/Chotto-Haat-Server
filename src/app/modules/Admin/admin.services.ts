@@ -101,7 +101,7 @@ const updateByIdFrmDB = async (id: string, req: Request): Promise<Admin> => {
   return result;
 };
 
-const softDeleteFromDB = async (id: string) => {
+const softDeleteFromDB = async (id: string): Promise<Admin> => {
   const adminExist = await prisma.admin.findFirstOrThrow({
     where: {
       id,
@@ -137,9 +137,39 @@ const softDeleteFromDB = async (id: string) => {
   return result;
 };
 
+const deleteFromDB = async (id: string) => {
+  const adminExist = await prisma.admin.findUniqueOrThrow({
+    where: {
+      id: id,
+    },
+  });
+
+  if (!adminExist) {
+    throw new ApiError(status.NOT_FOUND, "Admin is not found");
+  }
+
+  const result = await prisma.$transaction(async (transactionClient) => {
+    const adminDeletedData = await transactionClient.admin.delete({
+      where: {
+        id,
+      },
+    });
+    await transactionClient.user.delete({
+      where: {
+        email: adminDeletedData.email,
+      },
+    });
+
+    return adminDeletedData;
+  });
+
+  return result;
+};
+
 export const AdminServices = {
   getAllAdmins,
   getByIdFromDB,
   updateByIdFrmDB,
   softDeleteFromDB,
+  deleteFromDB,
 };

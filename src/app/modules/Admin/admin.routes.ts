@@ -24,4 +24,5 @@ router.delete(
   auth(UserRole.ADMIN),
   AdminControllers.softDeleteFromDB
 );
+router.delete("/:id", auth(UserRole.ADMIN), AdminControllers.deleteFromDB);
 export const AdminRoutes = router;
