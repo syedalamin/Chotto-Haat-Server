@@ -15,10 +15,12 @@ const adminUpdateValidation = z.object({
       .optional(),
     contactNumber: z.string({}).optional(),
     gender: z.enum(["MALE", "FEMALE"]).optional(),
-    isDeleted: z.boolean().optional(),
   }),
 });
 
+
+
 export const AdminValidations = {
   adminUpdateValidation,
+
 };

@@ -1,3 +1,4 @@
+import fs from "fs";
 import { v2 as cloudinary } from "cloudinary";
 import { ICloudinaryUploadResponse, IFile } from "../interface/file";
 cloudinary.config({
@@ -17,6 +18,7 @@ const sendImageToCloudinary = async (
         console.log(error);
       });
 
+    await fs.promises.unlink(file.path);
     return uploadResult;
   } catch (err) {
     console.log(err);

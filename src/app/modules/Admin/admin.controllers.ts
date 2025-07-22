@@ -41,9 +41,21 @@ const updateByIdFrmDB = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const softDeleteFromDB = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  const result = await AdminServices.softDeleteFromDB(id);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Soft Delete Admin  successfully",
+    data: result,
+  });
+});
 
 export const AdminControllers = {
   getAllAdmins,
   getByIdFromDB,
   updateByIdFrmDB,
+  softDeleteFromDB
 };

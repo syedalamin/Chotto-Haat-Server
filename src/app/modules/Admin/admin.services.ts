@@ -8,7 +8,7 @@ import {
 } from "../../../utils/pagination/pagination";
 import { buildSearchAndFilterCondition } from "../../../utils/search/buildSearchAndFilterCondition";
 import { buildSortCondition } from "../../../utils/search/buildSortCondition";
-import { Admin } from "@prisma/client";
+import { Admin, UserStatus } from "@prisma/client";
 import { Request } from "express";
 import ApiError from "../../../utils/share/apiError";
 import status from "http-status";
@@ -70,7 +70,7 @@ const getByIdFromDB = async (id: string): Promise<Admin | null> => {
   return result;
 };
 
-const updateByIdFrmDB = async (id: string, req: Request) => {
+const updateByIdFrmDB = async (id: string, req: Request): Promise<Admin> => {
   // console.log(id, req.body, req.file);
 
   const isUserExist = await prisma.admin.findFirstOrThrow({
@@ -101,8 +101,45 @@ const updateByIdFrmDB = async (id: string, req: Request) => {
   return result;
 };
 
+const softDeleteFromDB = async (id: string) => {
+  const adminExist = await prisma.admin.findFirstOrThrow({
+    where: {
+      id,
+      isDeleted: false,
+    },
+  });
+  if (!adminExist) {
+    throw new ApiError(status.NOT_FOUND, "Admin is not found");
+  }
+
+  const result = await prisma.$transaction(async (transactionClient) => {
+    const adminDeletedData = await transactionClient.admin.update({
+      where: {
+        id,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    await transactionClient.user.update({
+      where: {
+        email: adminDeletedData.email,
+      },
+      data: {
+        status: UserStatus.BLOCKED,
+      },
+    });
+
+    return adminDeletedData;
+  });
+
+  return result;
+};
+
 export const AdminServices = {
   getAllAdmins,
   getByIdFromDB,
   updateByIdFrmDB,
+  softDeleteFromDB,
 };
