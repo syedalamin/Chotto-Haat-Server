@@ -19,7 +19,31 @@ const getAllAdmins = catchAsync(async (req, res) => {
     data: result.data,
   });
 });
+const getByIdFromDB = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await AdminServices.getByIdFromDB(id);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Single Admin is retrieved successfully",
+    data: result,
+  });
+});
+
+const updateByIdFrmDB = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  const result = await AdminServices.updateByIdFrmDB(id, req);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Update Admin  successfully",
+    data: result,
+  });
+});
 
 export const AdminControllers = {
   getAllAdmins,
+  getByIdFromDB,
+  updateByIdFrmDB,
 };
