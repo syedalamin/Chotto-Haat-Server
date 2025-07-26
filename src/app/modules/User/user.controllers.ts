@@ -56,10 +56,27 @@ const getMyProfile = catchAsync(async (req, res) => {
 });
 const updateMyProfile = catchAsync(async (req, res) => {
   const user = req.user;
-  const result = await UserServices.updateMyProfile( req, user);
+  const result = await UserServices.updateMyProfile(req, user);
   sendResponse(res, {
     statusCode: status.OK,
-    message: "My Profile is retrieved Successfully",
+    message: "My Profile is Update Successfully",
+    data: result,
+  });
+});
+const changeUserStatus = catchAsync(async (req, res) => {
+  const { email } = req.params;
+  const result = await UserServices.changeUserStatus(email);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Status Change Successfully",
+    data: result,
+  });
+});
+const updateUserRole = catchAsync(async (req, res) => {
+  const result = await UserServices.updateUserRole();
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Update Status Successfully",
     data: result,
   });
 });
@@ -70,5 +87,7 @@ export const UserControllers = {
   getAllUserFromDB,
   getByIdFromDB,
   getMyProfile,
-  updateMyProfile
+  updateMyProfile,
+  changeUserStatus,
+  updateUserRole,
 };

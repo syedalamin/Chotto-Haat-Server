@@ -5,7 +5,7 @@ import { UserValidations } from "./user.validation";
 import { upload } from "../../../utils/fileUploader";
 import formDataParser from "../../../utils/formDataParser";
 import auth from "../../middlewares/auth";
-import { UserRole } from "@prisma/client";
+import { UserRole, UserStatus } from "@prisma/client";
 
 const router = express.Router();
 
@@ -35,4 +35,17 @@ router.patch(
   validateRequest(UserValidations.myProfileValidation),
   UserControllers.updateMyProfile
 );
+
+router.patch(
+  "/change-status/:email",
+  auth(UserRole.ADMIN),
+  // validateRequest(UserValidations.myProfileValidation),
+  UserControllers.changeUserStatus
+);
+router.patch(
+  "/update-role/:email",
+  // validateRequest(UserValidations.myProfileValidation),
+  UserControllers.updateUserRole
+);
+
 export const UserRoutes = router;

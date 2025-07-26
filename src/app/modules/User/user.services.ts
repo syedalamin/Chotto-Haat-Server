@@ -209,9 +209,7 @@ const updateMyProfile = async (req: Request, user?: JwtPayload) => {
       req.file
     )) as ICloudinaryUploadResponse;
     updatedData.profilePhoto = secure_url;
-   
   }
-
 
   let profileInfo;
   if (userInfo.role == UserRole.ADMIN) {
@@ -233,6 +231,81 @@ const updateMyProfile = async (req: Request, user?: JwtPayload) => {
   return { ...userInfo, ...profileInfo };
 };
 
+const changeUserStatus = async (email: string) => {
+  const isUserExist = await prisma.user.findUniqueOrThrow({
+    where: {
+      email,
+    },
+    select: {
+      id: true,
+      email: true,
+      status: true,
+      role: true,
+      admin: { select: { isDeleted: true } },
+      customer: { select: { isDeleted: true } },
+    },
+  });
+
+  if (!isUserExist) {
+    throw new ApiError(status.NOT_FOUND, "User is not found");
+  }
+
+  const newStatus = isUserExist.status == "ACTIVE" ? "BLOCKED" : "ACTIVE";
+  const newAdminIsDeleted = isUserExist.admin?.isDeleted ? false : true;
+  const newCustomerIsDeleted = isUserExist.customer?.isDeleted ? false : true;
+
+ 
+
+  const result = await prisma.$transaction(async (transactionClient) => {
+    const changeUserStatus = await transactionClient.user.update({
+      where: {
+        email: isUserExist.email,
+      },
+      data: {
+        status: newStatus,
+      },
+      select: {
+        email: true,
+        status: true,
+      },
+    });
+
+    let changeIsDeleted;
+    if (isUserExist.role == "ADMIN") {
+      changeIsDeleted = await transactionClient.admin.update({
+        where: {
+          email: isUserExist.email,
+        },
+        data: {
+          isDeleted: newAdminIsDeleted,
+        },
+        select: {
+          isDeleted: true,
+        },
+      });
+    } else if (isUserExist.role == "CUSTOMER") {
+      changeIsDeleted = await transactionClient.customer.update({
+        where: {
+          email: isUserExist.email,
+        },
+        data: {
+          isDeleted: newCustomerIsDeleted,
+        },
+        select: {
+          isDeleted: true,
+        },
+      });
+    }
+
+    return { ...changeUserStatus, ...changeIsDeleted };
+  });
+
+  return result;
+};
+const updateUserRole = async () => {
+  console.log("change user role");
+};
+
 export const UserServices = {
   createAdmin,
   createCustomer,
@@ -240,4 +313,6 @@ export const UserServices = {
   getByIdFromDB,
   getMyProfile,
   updateMyProfile,
+  changeUserStatus,
+  updateUserRole,
 };
