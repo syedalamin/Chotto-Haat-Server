@@ -184,10 +184,60 @@ const getMyProfile = async (user?: JwtPayload) => {
   return { ...userInfo, ...profileInfo };
 };
 
+const updateMyProfile = async (req: Request, user?: JwtPayload) => {
+  const userInfo = await prisma.user.findFirstOrThrow({
+    where: {
+      email: user?.email,
+      status: UserStatus.ACTIVE,
+    },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      status: true,
+    },
+  });
+
+  if (!userInfo) {
+    throw new ApiError(status.NOT_FOUND, "User is not found");
+  }
+
+  let updatedData = { ...req.body };
+
+  if (req.file) {
+    const { secure_url } = (await sendImageToCloudinary(
+      req.file
+    )) as ICloudinaryUploadResponse;
+    updatedData.profilePhoto = secure_url;
+   
+  }
+
+
+  let profileInfo;
+  if (userInfo.role == UserRole.ADMIN) {
+    profileInfo = await prisma.admin.update({
+      where: {
+        email: userInfo.email,
+      },
+      data: updatedData,
+    });
+  } else if (userInfo.role == UserRole.CUSTOMER) {
+    profileInfo = await prisma.customer.update({
+      where: {
+        email: userInfo.email,
+      },
+      data: updatedData,
+    });
+  }
+
+  return { ...userInfo, ...profileInfo };
+};
+
 export const UserServices = {
   createAdmin,
   createCustomer,
   getAllUserFromDB,
   getByIdFromDB,
   getMyProfile,
+  updateMyProfile,
 };

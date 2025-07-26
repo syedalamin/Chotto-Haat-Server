@@ -10,6 +10,7 @@ const sendImageToCloudinary = async (
   file: IFile
 ): Promise<ICloudinaryUploadResponse | undefined | unknown> => {
   try {
+    console.log(file.path)
     const uploadResult = await cloudinary.uploader
       .upload(file.path, {
         public_id: file.filename,

@@ -54,6 +54,15 @@ const getMyProfile = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const updateMyProfile = catchAsync(async (req, res) => {
+  const user = req.user;
+  const result = await UserServices.updateMyProfile( req, user);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "My Profile is retrieved Successfully",
+    data: result,
+  });
+});
 
 export const UserControllers = {
   createAdmin,
@@ -61,4 +70,5 @@ export const UserControllers = {
   getAllUserFromDB,
   getByIdFromDB,
   getMyProfile,
+  updateMyProfile
 };

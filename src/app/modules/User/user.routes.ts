@@ -28,5 +28,11 @@ router.post(
 router.get("/", auth(UserRole.ADMIN), UserControllers.getAllUserFromDB);
 router.get("/me", auth(UserRole.ADMIN), UserControllers.getMyProfile);
 router.get("/:id", auth(UserRole.ADMIN), UserControllers.getByIdFromDB);
-
+router.patch(
+  "/me",
+  upload.single("file"),
+  formDataParser,
+  validateRequest(UserValidations.myProfileValidation),
+  UserControllers.updateMyProfile
+);
 export const UserRoutes = router;
