@@ -26,9 +26,7 @@ router.post(
 );
 
 router.get("/", auth(UserRole.ADMIN), UserControllers.getAllUserFromDB);
-
-
-
-
+router.get("/me", auth(UserRole.ADMIN), UserControllers.getMyProfile);
+router.get("/:id", auth(UserRole.ADMIN), UserControllers.getByIdFromDB);
 
 export const UserRoutes = router;

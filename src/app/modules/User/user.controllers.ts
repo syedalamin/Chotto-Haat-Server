@@ -6,7 +6,7 @@ import pick from "../../../utils/search/pick";
 import { userFilterableFields } from "./user.constants";
 import { paginationFilterableField } from "../../../utils/pagination/pagination";
 
-const createAdmin = catchAsync(async (req, res, next) => {
+const createAdmin = catchAsync(async (req, res) => {
   const data = await UserServices.createAdmin(req);
   sendResponse(res, {
     statusCode: status.OK,
@@ -15,7 +15,7 @@ const createAdmin = catchAsync(async (req, res, next) => {
   });
 });
 
-const createCustomer = catchAsync(async (req, res, next) => {
+const createCustomer = catchAsync(async (req, res) => {
   const data = await UserServices.createCustomer(req);
   sendResponse(res, {
     statusCode: status.OK,
@@ -24,14 +24,34 @@ const createCustomer = catchAsync(async (req, res, next) => {
   });
 });
 
-const getAllUserFromDB = catchAsync(async (req, res, next) => {
-   const filters = pick(req.query, userFilterableFields);
-   const options = pick(req.query, paginationFilterableField);
-  const data = await UserServices.getAllUserFromDB(filters, options);
+const getAllUserFromDB = catchAsync(async (req, res) => {
+  const filters = pick(req.query, userFilterableFields);
+  const options = pick(req.query, paginationFilterableField);
+  const result = await UserServices.getAllUserFromDB(filters, options);
   sendResponse(res, {
     statusCode: status.OK,
     message: "Users are retrieved Successfully",
-    data: data,
+    data: result.data,
+    meta: result.meta,
+  });
+});
+const getByIdFromDB = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await UserServices.getByIdFromDB(id);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Users is retrieved Successfully",
+    data: result,
+  });
+});
+
+const getMyProfile = catchAsync(async (req, res) => {
+  const user = req.user;
+  const result = await UserServices.getMyProfile(user);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "My Profile is retrieved Successfully",
+    data: result,
   });
 });
 
@@ -39,4 +59,6 @@ export const UserControllers = {
   createAdmin,
   createCustomer,
   getAllUserFromDB,
+  getByIdFromDB,
+  getMyProfile,
 };

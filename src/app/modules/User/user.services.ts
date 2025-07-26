@@ -1,4 +1,4 @@
-import { Admin, Customer, UserRole } from "@prisma/client";
+import { Admin, User, UserRole, UserStatus } from "@prisma/client";
 import prisma from "../../../utils/share/prisma";
 import bcrypt from "bcrypt";
 import sendImageToCloudinary from "../../../utils/sendCloudinary";
@@ -15,6 +15,7 @@ import {
   allowedSortOrder,
   allowedUserSortFields,
 } from "../../../utils/pagination/pagination";
+import { JwtPayload } from "jsonwebtoken";
 
 const createAdmin = async (req: Request): Promise<Admin> => {
   const isUserExist = await prisma.admin.findFirst({
@@ -110,8 +111,7 @@ const getAllUserFromDB = async (
 
   const whereConditions = buildSearchAndFilterCondition<IUserFilterRequest>(
     filters,
-    userSearchAbleFields,
-    
+    userSearchAbleFields
   );
 
   const result = await prisma.user.findMany({
@@ -128,7 +128,7 @@ const getAllUserFromDB = async (
           },
   });
 
-   const total = await prisma.user.count({
+  const total = await prisma.user.count({
     where: whereConditions,
   });
   return {
@@ -141,8 +141,53 @@ const getAllUserFromDB = async (
   };
 };
 
+const getByIdFromDB = async (id: string): Promise<User | null> => {
+  const result = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: id,
+    },
+  });
+
+  return result;
+};
+
+const getMyProfile = async (user?: JwtPayload) => {
+  const userInfo = await prisma.user.findFirstOrThrow({
+    where: {
+      email: user?.email,
+      status: UserStatus.ACTIVE,
+    },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      status: true,
+    },
+  });
+
+  let profileInfo;
+
+  if (userInfo.role == UserRole.ADMIN) {
+    profileInfo = await prisma.admin.findUniqueOrThrow({
+      where: {
+        email: userInfo.email,
+      },
+    });
+  } else if (userInfo.role == UserRole.CUSTOMER) {
+    profileInfo = await prisma.customer.findUniqueOrThrow({
+      where: {
+        email: userInfo.email,
+      },
+    });
+  }
+
+  return { ...userInfo, ...profileInfo };
+};
+
 export const UserServices = {
   createAdmin,
   createCustomer,
   getAllUserFromDB,
+  getByIdFromDB,
+  getMyProfile,
 };
