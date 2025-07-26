@@ -73,7 +73,8 @@ const changeUserStatus = catchAsync(async (req, res) => {
   });
 });
 const updateUserRole = catchAsync(async (req, res) => {
-  const result = await UserServices.updateUserRole();
+  const { email } = req.params;
+  const result = await UserServices.updateUserRole(email, req.body);
   sendResponse(res, {
     statusCode: status.OK,
     message: "Update Status Successfully",

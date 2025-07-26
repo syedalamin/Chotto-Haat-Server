@@ -254,8 +254,6 @@ const changeUserStatus = async (email: string) => {
   const newAdminIsDeleted = isUserExist.admin?.isDeleted ? false : true;
   const newCustomerIsDeleted = isUserExist.customer?.isDeleted ? false : true;
 
- 
-
   const result = await prisma.$transaction(async (transactionClient) => {
     const changeUserStatus = await transactionClient.user.update({
       where: {
@@ -302,8 +300,34 @@ const changeUserStatus = async (email: string) => {
 
   return result;
 };
-const updateUserRole = async () => {
-  console.log("change user role");
+const updateUserRole = async (email: string, payload: { role: UserRole }) => {
+  const isUserExist = await prisma.user.findFirstOrThrow({
+    where: {
+      email,
+      status: UserStatus.ACTIVE,
+    },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+    },
+  });
+
+  const updatedUserRole = await prisma.user.update({
+    where: {
+      email: isUserExist.email,
+    },
+    data: payload,
+    select: {
+      email: true,
+      password: true,
+      role: true,
+      needPasswordChange: true,
+      status: true,
+    },
+  });
+
+  return updatedUserRole;
 };
 
 export const UserServices = {

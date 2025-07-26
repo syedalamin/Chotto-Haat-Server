@@ -39,11 +39,11 @@ router.patch(
 router.patch(
   "/change-status/:email",
   auth(UserRole.ADMIN),
-  // validateRequest(UserValidations.myProfileValidation),
   UserControllers.changeUserStatus
 );
 router.patch(
   "/update-role/:email",
+   auth(UserRole.ADMIN),
   // validateRequest(UserValidations.myProfileValidation),
   UserControllers.updateUserRole
 );
