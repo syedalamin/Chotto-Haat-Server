@@ -28,7 +28,8 @@ const getAllAdmins = async (
 
   const whereConditions = buildSearchAndFilterCondition<IAdminFilterRequest>(
     filters,
-    adminSearchAbleFields
+    adminSearchAbleFields,
+    true
   );
 
   // console.log(searchTerm, filterData)

@@ -6,6 +6,15 @@ import { ICloudinaryUploadResponse } from "../../../interface/file";
 import { Request } from "express";
 import status from "http-status";
 import ApiError from "../../../utils/share/apiError";
+import { IUserFilterRequest } from "./user.interface";
+import { buildSearchAndFilterCondition } from "../../../utils/search/buildSearchAndFilterCondition";
+import { userSearchAbleFields } from "./user.constants";
+import { IPaginationOptions } from "../../../interface/pagination";
+import { buildSortCondition } from "../../../utils/search/buildSortCondition";
+import {
+  allowedSortOrder,
+  allowedUserSortFields,
+} from "../../../utils/pagination/pagination";
 
 const createAdmin = async (req: Request): Promise<Admin> => {
   const isUserExist = await prisma.admin.findFirst({
@@ -87,7 +96,53 @@ const createCustomer = async (req: Request) => {
   return result;
 };
 
+const getAllUserFromDB = async (
+  filters: IUserFilterRequest,
+  options: IPaginationOptions
+) => {
+  const { limit, page, skip, sortBy, sortOrder } = buildSortCondition(
+    options,
+    allowedUserSortFields,
+    allowedSortOrder
+  );
+
+  // search
+
+  const whereConditions = buildSearchAndFilterCondition<IUserFilterRequest>(
+    filters,
+    userSearchAbleFields,
+    
+  );
+
+  const result = await prisma.user.findMany({
+    where: whereConditions,
+    skip,
+    take: limit,
+    orderBy:
+      sortBy && sortOrder
+        ? {
+            [sortBy]: sortOrder,
+          }
+        : {
+            createdAt: "desc",
+          },
+  });
+
+   const total = await prisma.user.count({
+    where: whereConditions,
+  });
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: result,
+  };
+};
+
 export const UserServices = {
   createAdmin,
   createCustomer,
+  getAllUserFromDB,
 };

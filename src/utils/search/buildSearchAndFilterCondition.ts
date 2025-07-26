@@ -1,7 +1,7 @@
-
 export const buildSearchAndFilterCondition = <T>(
   filters: Partial<T> & { searchTerm?: string },
-  searchAbleFields: string[]
+  searchAbleFields: string[],
+  isDeleted: boolean = false
 ) => {
   const { searchTerm, ...filterData } = filters;
   const andConditions: any[] = [];
@@ -30,10 +30,11 @@ export const buildSearchAndFilterCondition = <T>(
   }
   // soft delete
 
-  andConditions.push({
-    isDeleted: false,
-  });
-
+  if (isDeleted) {
+    andConditions.push({
+      isDeleted: false,
+    });
+  }
   const whereConditions = {
     AND: andConditions,
   };

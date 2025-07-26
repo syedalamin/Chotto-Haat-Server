@@ -25,4 +25,10 @@ router.post(
   UserControllers.createCustomer
 );
 
+router.get("/", auth(UserRole.ADMIN), UserControllers.getAllUserFromDB);
+
+
+
+
+
 export const UserRoutes = router;
