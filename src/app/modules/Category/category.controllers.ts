@@ -4,7 +4,7 @@ import sendResponse from "../../../utils/share/sendResponse";
 import { CategoryServices } from "./category.services";
 
 const createCategoryIntoDB = catchAsync(async (req, res) => {
-  const result = await CategoryServices.createCategoryIntoDB();
+  const result = await CategoryServices.createCategoryIntoDB(req);
 
   sendResponse(res, {
     statusCode: status.OK,
@@ -17,12 +17,13 @@ const getAllCategoryFromDB = catchAsync(async (req, res) => {
 
   sendResponse(res, {
     statusCode: status.OK,
-    message: "Category is created successfully",
+    message: "Category is retrieved successfully",
     data: result,
   });
 });
 const getByIdFromDB = catchAsync(async (req, res) => {
-  const result = await CategoryServices.getByIdFromDB();
+  const { id } = req.params;
+  const result = await CategoryServices.getByIdFromDB(id);
 
   sendResponse(res, {
     statusCode: status.OK,
@@ -31,16 +32,18 @@ const getByIdFromDB = catchAsync(async (req, res) => {
   });
 });
 const updateByIdIntoDB = catchAsync(async (req, res) => {
-  const result = await CategoryServices.updateByIdIntoDB();
+  const { id } = req.params;
+  const result = await CategoryServices.updateByIdIntoDB(req, id);
 
   sendResponse(res, {
     statusCode: status.OK,
-    message: "Category is created successfully",
+    message: "Category is updated successfully",
     data: result,
   });
 });
 const deleteByIdFromDB = catchAsync(async (req, res) => {
-  const result = await CategoryServices.deleteByIdFromDB();
+  const { id } = req.params;
+  const result = await CategoryServices.deleteByIdFromDB(id);
 
   sendResponse(res, {
     statusCode: status.OK,
