@@ -68,6 +68,28 @@ model Customer {
   @@map("customer")
 }
 
+model Category {
+  id          String        @id @default(uuid())
+  name        String
+  slug        String
+  image       String
+  isDeleted   Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  subCategory SubCategory[]
+}
+
+model SubCategory {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String
+  image     String
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  category  Category @relation(fields: [id], references: [id])
+}
+
 //! type
 enum Gender {
   MALE
