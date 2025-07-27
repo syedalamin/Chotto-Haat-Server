@@ -2,6 +2,8 @@ import status from "http-status";
 import catchAsync from "../../../utils/share/catchAsync";
 import sendResponse from "../../../utils/share/sendResponse";
 import { CategoryServices } from "./category.services";
+import pick from "../../../utils/search/pick";
+import { paginationFilterableField } from "../../../utils/pagination/pagination";
 
 const createCategoryIntoDB = catchAsync(async (req, res) => {
   const result = await CategoryServices.createCategoryIntoDB(req);
@@ -13,7 +15,9 @@ const createCategoryIntoDB = catchAsync(async (req, res) => {
   });
 });
 const getAllCategoryFromDB = catchAsync(async (req, res) => {
-  const result = await CategoryServices.getAllCategoryFromDB();
+   const filters = pick(req.query, ["searchTerm"]);
+  const options = pick(req.query, paginationFilterableField);
+  const result = await CategoryServices.getAllCategoryFromDB(filters, options);
 
   sendResponse(res, {
     statusCode: status.OK,

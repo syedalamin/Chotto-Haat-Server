@@ -6,6 +6,10 @@ import sendImageToCloudinary from "../../../utils/sendCloudinary";
 import { ICloudinaryUploadResponse } from "../../../interface/file";
 import { generateSlug } from "../../../utils/slug/generateSlug";
 import { Prisma } from "@prisma/client";
+import { IPaginationOptions } from "../../../interface/pagination";
+import { allowedSortOrder } from "../../../utils/pagination/pagination";
+import { buildSortCondition } from "../../../utils/search/buildSortCondition";
+import { buildSearchAndFilterCondition } from "../../../utils/search/buildSearchAndFilterCondition";
 
 const createCategoryIntoDB = async (req: Request) => {
   const name = req.body.name;
@@ -43,9 +47,45 @@ const createCategoryIntoDB = async (req: Request) => {
 
   return result;
 };
-const getAllCategoryFromDB = async () => {
-  const result = await prisma.category.findMany({});
-  return result;
+const getAllCategoryFromDB = async (
+  filters: { searchTerm?: string | undefined },
+  options: IPaginationOptions
+) => {
+  const { limit, page, skip, sortBy, sortOrder } = buildSortCondition(
+    options,
+    ["name"],
+    allowedSortOrder
+  );
+  const whereConditions = buildSearchAndFilterCondition<{
+    searchTerm?: string | undefined;
+  }>(filters, ["name"]);
+
+  
+  const results = await prisma.category.findMany({
+    where: whereConditions,
+    skip,
+    take: limit,
+    orderBy:
+      sortBy && sortOrder
+        ? {
+            [sortBy]: sortOrder,
+          }
+        : {
+            createdAt: "desc",
+          },
+  });
+
+  const total = await prisma.category.count({
+    where: whereConditions,
+  });
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: results,
+  };
 };
 const getByIdFromDB = async (id: string) => {
   const result = await prisma.category.findFirstOrThrow({

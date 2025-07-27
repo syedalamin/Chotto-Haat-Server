@@ -77,6 +77,8 @@ model Category {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   subCategory SubCategory[]
+
+  @@map("category")
 }
 
 model SubCategory {
@@ -87,7 +89,10 @@ model SubCategory {
   isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  category  Category @relation(fields: [id], references: [id])
+  categoryId String
+  category  Category @relation(fields: [categoryId], references: [id])
+
+  @@map("subCategory")
 }
 
 //! type
