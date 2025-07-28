@@ -24,7 +24,8 @@ const getAllDataFromDB = catchAsync(async (req, res) => {
   });
 });
 const getByIdFromDB = catchAsync(async (req, res) => {
-  const result = await ProductServices.getByIdFromDB();
+  const {id} = req.params;
+  const result = await ProductServices.getByIdFromDB(id);
 
   sendResponse(res, {
     statusCode: status.OK,
@@ -33,7 +34,8 @@ const getByIdFromDB = catchAsync(async (req, res) => {
   });
 });
 const updateByIdIntoDB = catchAsync(async (req, res) => {
-  const result = await ProductServices.updateByIdIntoDB();
+  const {id} = req.params;
+  const result = await ProductServices.updateByIdIntoDB(id, req);
 
   sendResponse(res, {
     statusCode: status.OK,
@@ -41,8 +43,9 @@ const updateByIdIntoDB = catchAsync(async (req, res) => {
     data: result,
   });
 });
-const deleteByIdFromDB = catchAsync(async (req, res) => {
-  const result = await ProductServices.deleteByIdFromDB();
+const softDeleteByIdFromDB = catchAsync(async (req, res) => {
+  const {id} = req.params;
+  const result = await ProductServices.softDeleteByIdFromDB(id);
 
   sendResponse(res, {
     statusCode: status.OK,
@@ -56,5 +59,5 @@ export const ProductControllers = {
   getAllDataFromDB,
   getByIdFromDB,
   updateByIdIntoDB,
-  deleteByIdFromDB,
+  softDeleteByIdFromDB,
 };

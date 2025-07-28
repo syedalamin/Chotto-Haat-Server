@@ -21,9 +21,9 @@ router.get("/", auth(UserRole.ADMIN), ProductControllers.getAllDataFromDB);
 router.get("/:id", auth(UserRole.ADMIN), ProductControllers.getByIdFromDB);
 router.patch("/:id", auth(UserRole.ADMIN), ProductControllers.updateByIdIntoDB);
 router.delete(
-  "/:id",
+  "/soft/:id",
   auth(UserRole.ADMIN),
-  ProductControllers.deleteByIdFromDB
+  ProductControllers.softDeleteByIdFromDB
 );
 
 export const ProductRoutes = router;

@@ -5,8 +5,9 @@ import prisma from "../../../utils/share/prisma";
 import ApiError from "../../../utils/share/apiError";
 import status from "http-status";
 import { generateSlug } from "../../../utils/slug/generateSlug";
+import { Product, ProductStatus } from "@prisma/client";
 
-const createDataIntoDB = async (req: Request) => {
+const createDataIntoDB = async (req: Request): Promise<Product> => {
   const productData = req.body;
   const isSubCategoryIdExist = await prisma.subCategory.findFirst({
     where: {
@@ -40,18 +41,85 @@ const createDataIntoDB = async (req: Request) => {
 
   productData.slug = generateSlug(productData.name);
 
-  const result = await prisma.product.create({data: productData})
-  return result
+  const result = await prisma.product.create({ data: productData });
+  return result;
 };
-const getAllDataFromDB = () => {};
-const getByIdFromDB = () => {};
-const updateByIdIntoDB = () => {};
-const deleteByIdFromDB = () => {};
+const getAllDataFromDB = async (): Promise<Product[]> => {
+  const result = await prisma.product.findMany({
+    where: {
+      status: {
+        in: [
+          ProductStatus.ACTIVE,
+          ProductStatus.DISCONTINUED,
+          ProductStatus.OUT_OF_STOCK,
+        ],
+      },
+    },
+    include: {
+      subCategory: {
+        select: {
+          name: true,
+          slug: true,
+        },
+      },
+    },
+  });
+  return result;
+};
+const getByIdFromDB = async (id: string) => {
+  const result = await prisma.product.findFirstOrThrow({
+    where: {
+      id,
+      status: {
+        in: [
+          ProductStatus.ACTIVE,
+          ProductStatus.DISCONTINUED,
+          ProductStatus.OUT_OF_STOCK,
+        ],
+      },
+    },
+
+    include: {
+      subCategory: {
+        select: {
+          name: true,
+          slug: true,
+        },
+      },
+    },
+  });
+
+  return result;
+};
+const updateByIdIntoDB = (id: string, req: Request) => {};
+const softDeleteByIdFromDB = async (id: string) => {
+  const isProductExists = await prisma.product.findUniqueOrThrow({
+    where: {
+      id,
+    },
+  });
+
+  const isStatusDelete =
+    isProductExists.status === ProductStatus.ACTIVE
+      ? ProductStatus.INACTIVE
+      : ProductStatus.ACTIVE;
+
+  const result = await prisma.product.update({
+    where: {
+      id: isProductExists.id,
+    },
+    data: {
+      status: isStatusDelete,
+    },
+  });
+
+  return result;
+};
 
 export const ProductServices = {
   createDataIntoDB,
   getAllDataFromDB,
   getByIdFromDB,
   updateByIdIntoDB,
-  deleteByIdFromDB,
+  softDeleteByIdFromDB,
 };
