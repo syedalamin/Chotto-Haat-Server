@@ -15,13 +15,13 @@ const createCategoryIntoDB = catchAsync(async (req, res) => {
   });
 });
 const getAllCategoryFromDB = catchAsync(async (req, res) => {
-   const filters = pick(req.query, ["searchTerm"]);
+  const filters = pick(req.query, ["searchTerm"]);
   const options = pick(req.query, paginationFilterableField);
   const result = await CategoryServices.getAllCategoryFromDB(filters, options);
 
   sendResponse(res, {
     statusCode: status.OK,
-    message: "Category is retrieved successfully",
+    message: "Category are retrieved successfully",
     data: result,
   });
 });
@@ -31,7 +31,7 @@ const getByIdFromDB = catchAsync(async (req, res) => {
 
   sendResponse(res, {
     statusCode: status.OK,
-    message: "Category is created successfully",
+    message: "Category is retrieved successfully",
     data: result,
   });
 });
@@ -45,13 +45,23 @@ const updateByIdIntoDB = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const softDeleteByIdFromDB = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await CategoryServices.softDeleteByIdFromDB(id);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Category is deleted successfully",
+    data: result,
+  });
+});
 const deleteByIdFromDB = catchAsync(async (req, res) => {
   const { id } = req.params;
   const result = await CategoryServices.deleteByIdFromDB(id);
 
   sendResponse(res, {
     statusCode: status.OK,
-    message: "Category is created successfully",
+    message: "Category is deleted successfully",
     data: result,
   });
 });
@@ -61,5 +71,6 @@ export const CategoryControllers = {
   getAllCategoryFromDB,
   getByIdFromDB,
   updateByIdIntoDB,
+  softDeleteByIdFromDB,
   deleteByIdFromDB,
 };

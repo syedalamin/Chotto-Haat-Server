@@ -8,7 +8,6 @@ const categoryValidation = z.object({
 const updateCategoryValidation = z.object({
   body: z.object({
     name: z.string().optional(),
-    isDeleted: z.boolean().optional(),
   }),
 });
 

@@ -60,7 +60,6 @@ const getAllCategoryFromDB = async (
     searchTerm?: string | undefined;
   }>(filters, ["name"]);
 
-  
   const results = await prisma.category.findMany({
     where: whereConditions,
     skip,
@@ -73,6 +72,17 @@ const getAllCategoryFromDB = async (
         : {
             createdAt: "desc",
           },
+
+    include: {
+      subCategory: {
+        select: {
+          id: true,
+          name: true,
+          categoryId: true,
+          isDeleted: true,
+        },
+      },
+    },
   });
 
   const total = await prisma.category.count({
@@ -92,6 +102,16 @@ const getByIdFromDB = async (id: string) => {
     where: {
       id,
       isDeleted: false,
+    },
+    include: {
+      subCategory: {
+        select: {
+          id: true,
+          name: true,
+          categoryId: true,
+          isDeleted: true,
+        },
+      },
     },
   });
 
@@ -136,8 +156,6 @@ const updateByIdIntoDB = async (req: Request, id: string) => {
   if (name) {
     categoryData.name = name;
     categoryData.slug = generateSlug(name);
-  } else if (req.body) {
-    categoryData.isDeleted = req.body.isDeleted;
   } else if (req.body.image) {
     categoryData.image = req.body.image;
   }
@@ -151,23 +169,109 @@ const updateByIdIntoDB = async (req: Request, id: string) => {
 
   return result;
 };
-const deleteByIdFromDB = async (id: string) => {
+
+const softDeleteByIdFromDB = async (id: string) => {
   const isExistsCategory = await prisma.category.findUnique({
     where: {
       id,
+    },
+    include: {
+      subCategory: {
+        select: {
+          id: true,
+          name: true,
+          isDeleted: true,
+        },
+      },
     },
   });
 
   if (!isExistsCategory) {
     throw new ApiError(status.NOT_FOUND, "Category is not found");
   }
+  const isExistsSubCategoryIds = isExistsCategory.subCategory.map(
+    (category) => category.id
+  );
 
-  const result = await prisma.category.delete({
+  const isCategoryDeleted = isExistsCategory.isDeleted ? false : true;
+  const result = await prisma.$transaction(async (transactionClient) => {
+    const categoryDelete = await transactionClient.category.update({
+      where: {
+        id: isExistsCategory.id,
+      },
+      data: {
+        isDeleted: isCategoryDeleted,
+      },
+      select: {
+        name: true,
+        isDeleted: true,
+      },
+    });
+
+    let subCategoryDeleted;
+    if (isExistsSubCategoryIds) {
+      subCategoryDeleted = await transactionClient.subCategory.updateMany({
+        where: {
+          id: {
+            in: isExistsSubCategoryIds,
+          },
+        },
+        data: {
+          isDeleted: isCategoryDeleted,
+        },
+      });
+    }
+
+    return { ...categoryDelete, ...subCategoryDeleted };
+  });
+  return result;
+};
+
+const deleteByIdFromDB = async (id: string) => {
+  const isExistsCategory = await prisma.category.findUnique({
     where: {
-      id: isExistsCategory.id,
+      id,
+    },
+    include: {
+      subCategory: {
+        select: {
+          id: true,
+          name: true,
+          isDeleted: true,
+        },
+      },
     },
   });
 
+  if (!isExistsCategory) {
+    throw new ApiError(status.NOT_FOUND, "Category is not found");
+  }
+  const isExistsSubCategoryIds = isExistsCategory.subCategory.map(
+    (category) => category.id
+  );
+
+  const result = await prisma.$transaction(async (transactionClient) => {
+    let subCategoryDeleted;
+    if (isExistsSubCategoryIds) {
+      subCategoryDeleted = await transactionClient.subCategory.deleteMany({
+        where: {
+          id: {
+            in: isExistsSubCategoryIds,
+          },
+        },
+      });
+    }
+    const categoryDelete = await transactionClient.category.delete({
+      where: {
+        id: isExistsCategory.id,
+      },
+      select: {
+        name: true,
+      },
+    });
+
+    return { ...categoryDelete, ...subCategoryDeleted };
+  });
   return result;
 };
 
@@ -177,4 +281,5 @@ export const CategoryServices = {
   getByIdFromDB,
   updateByIdIntoDB,
   deleteByIdFromDB,
+  softDeleteByIdFromDB,
 };

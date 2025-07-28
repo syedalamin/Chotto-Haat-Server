@@ -27,6 +27,11 @@ router.patch(
   CategoryControllers.updateByIdIntoDB
 );
 router.delete(
+  "/soft/:id",
+  auth(UserRole.ADMIN),
+  CategoryControllers.softDeleteByIdFromDB
+);
+router.delete(
   "/:id",
   auth(UserRole.ADMIN),
   CategoryControllers.deleteByIdFromDB
