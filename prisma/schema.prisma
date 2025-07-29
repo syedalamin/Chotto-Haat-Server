@@ -27,6 +27,7 @@ model User {
   admin              Admin?
   customer           Customer?
   product            Product[]
+  cart               Cart[]
 
   @@map("users")
 }
@@ -86,10 +87,10 @@ model SubCategory {
   name       String
   slug       String
   image      String
+  categoryId String
   isDeleted  Boolean   @default(false)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
-  categoryId String
   category   Category  @relation(fields: [categoryId], references: [id])
   product    Product[]
 
@@ -103,7 +104,7 @@ model Product {
   productImages String[]
   slug          String
   price         Decimal
-  stock         Int           
+  stock         Int
   discount      Decimal       @default(0)
   status        ProductStatus @default(ACTIVE)
   rating        Decimal       @default(0)
@@ -114,6 +115,27 @@ model Product {
   subCategoryId String
   subCategory   SubCategory   @relation(fields: [subCategoryId], references: [id])
   seller        User          @relation(fields: [sellerId], references: [id])
+  cart          Cart[]
+
+
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String
+  productId String
+  quantity  Int
+  price     Decimal
+  discount  Decimal?
+  status    CartStatus
+  isDeleted Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("cart")
 }
 
 //! type
@@ -139,4 +161,10 @@ enum ProductStatus {
   INACTIVE
   OUT_OF_STOCK
   DISCONTINUED
+}
+
+enum CartStatus {
+  ACTIVE
+  CHECKED_OUT
+  SAVED_FOR_LATER
 }

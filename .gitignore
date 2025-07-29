@@ -4,3 +4,15 @@ node_modules
 
 /src/generated/prisma
 /backup
+
+
+
+#! temporary start
+
+Wishlist
+Order
+OrderItem
+Invoice
+PromoCode
+Review 
+#! temporary end
