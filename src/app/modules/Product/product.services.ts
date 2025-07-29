@@ -46,8 +46,7 @@ const createDataIntoDB = async (req: Request): Promise<Product> => {
   }
 
   productData.slug = generateSlug(productData.name);
-  
-  
+
   const result = await prisma.product.create({ data: productData });
   return result;
 };
@@ -144,7 +143,85 @@ const getByIdFromDB = async (id: string) => {
   return result;
 };
 
-const updateByIdIntoDB = (id: string, req: Request) => {};
+const updateByIdIntoDB = async (id: string, req: Request) => {
+  const productData = req.body;
+  if (productData.subCategoryId) {
+    const isSubCategoryIdExist = await prisma.subCategory.findFirst({
+      where: {
+        id: productData.subCategoryId,
+        isDeleted: false,
+      },
+    });
+    if (!isSubCategoryIdExist) {
+      throw new ApiError(status.NOT_FOUND, "Sub Category is Not found");
+    }
+  }
+
+  if (productData.name) {
+    const isProductExistsByName = await prisma.product.findFirst({
+      where: {
+        name: productData.name,
+        status: {
+          in: [
+            ProductStatus.ACTIVE,
+            ProductStatus.DISCONTINUED,
+            ProductStatus.OUT_OF_STOCK,
+          ],
+        },
+      },
+    });
+
+    if (isProductExistsByName) {
+      throw new ApiError(status.CONFLICT, "Product name is already exists");
+    }
+    productData.slug = generateSlug(productData.name);
+  }
+
+  const existingProduct = await prisma.product.findUniqueOrThrow({
+    where: {
+      id,
+      status: {
+        in: [
+          ProductStatus.ACTIVE,
+          ProductStatus.DISCONTINUED,
+          ProductStatus.OUT_OF_STOCK,
+        ],
+      },
+    },
+  });
+
+  if (!existingProduct) {
+    throw new ApiError(status.NOT_FOUND, "Product is not found");
+  }
+  let updateImages = existingProduct.productImages || [];
+
+  if (productData.removeImages && Array.isArray(productData.removeImages)) {
+    updateImages = updateImages.filter(
+      (img) => !productData.removeImages.includes(img)
+    );
+  }
+
+  if (req.files && Array.isArray(req.files)) {
+    const uploadResult = await Promise.all(
+      req.files.map((file) => sendImageToCloudinary(file))
+    );
+
+    const imageUrl = uploadResult.map(
+      (result) => (result as ICloudinaryUploadResponse)?.secure_url
+    );
+    updateImages = [...updateImages, ...imageUrl];
+  }
+  existingProduct.productImages = updateImages;
+
+  const result = await prisma.product.update({
+    where: {
+      id: existingProduct.id,
+    },
+    data: existingProduct,
+  });
+
+  return result;
+};
 
 const softDeleteByIdFromDB = async (id: string) => {
   const isProductExists = await prisma.product.findUniqueOrThrow({

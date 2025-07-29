@@ -19,7 +19,13 @@ router.post(
 );
 router.get("/", auth(UserRole.ADMIN), ProductControllers.getAllDataFromDB);
 router.get("/:id", auth(UserRole.ADMIN), ProductControllers.getByIdFromDB);
-router.patch("/:id", auth(UserRole.ADMIN), ProductControllers.updateByIdIntoDB);
+router.patch(
+  "/:id",
+  upload.any(),
+  formDataParser,
+  auth(UserRole.ADMIN),
+  ProductControllers.updateByIdIntoDB
+);
 router.delete(
   "/soft/:id",
   auth(UserRole.ADMIN),
