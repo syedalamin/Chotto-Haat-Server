@@ -5,7 +5,13 @@ import prisma from "../../../utils/share/prisma";
 import ApiError from "../../../utils/share/apiError";
 import status from "http-status";
 import { generateSlug } from "../../../utils/slug/generateSlug";
-import { Product, ProductStatus } from "@prisma/client";
+import { Prisma, Product, ProductStatus } from "@prisma/client";
+import { IPaginationOptions } from "../../../interface/pagination";
+import { IProductFilterFields } from "./product.interface";
+import { buildSortCondition } from "../../../utils/search/buildSortCondition";
+import { allowedSortOrder } from "../../../utils/pagination/pagination";
+import { allowedProductSortAbleField } from "./product.constant";
+import { buildSearchAndFilterCondition } from "../../../utils/search/buildSearchAndFilterCondition";
 
 const createDataIntoDB = async (req: Request): Promise<Product> => {
   const productData = req.body;
@@ -40,13 +46,29 @@ const createDataIntoDB = async (req: Request): Promise<Product> => {
   }
 
   productData.slug = generateSlug(productData.name);
-
+  
+  
   const result = await prisma.product.create({ data: productData });
   return result;
 };
-const getAllDataFromDB = async (): Promise<Product[]> => {
+const getAllDataFromDB = async (
+  filters: IProductFilterFields,
+  options: IPaginationOptions
+) => {
+  const { limit, page, skip, sortBy, sortOrder } = buildSortCondition(
+    options,
+    allowedProductSortAbleField,
+    allowedSortOrder
+  );
+
+  const whereConditions = buildSearchAndFilterCondition<IProductFilterFields>(
+    filters,
+    ["name"]
+  );
+
   const result = await prisma.product.findMany({
     where: {
+      ...whereConditions,
       status: {
         in: [
           ProductStatus.ACTIVE,
@@ -55,6 +77,16 @@ const getAllDataFromDB = async (): Promise<Product[]> => {
         ],
       },
     },
+    skip,
+    take: limit,
+    orderBy:
+      sortBy && sortOrder
+        ? {
+            [sortBy]: sortOrder,
+          }
+        : {
+            createdAt: "desc",
+          },
     include: {
       subCategory: {
         select: {
@@ -64,7 +96,27 @@ const getAllDataFromDB = async (): Promise<Product[]> => {
       },
     },
   });
-  return result;
+  const total = await prisma.product.count({
+    where: {
+      ...whereConditions,
+      status: {
+        in: [
+          ProductStatus.ACTIVE,
+          ProductStatus.DISCONTINUED,
+          ProductStatus.OUT_OF_STOCK,
+        ],
+      },
+    },
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: result,
+  };
 };
 const getByIdFromDB = async (id: string) => {
   const result = await prisma.product.findFirstOrThrow({
@@ -91,7 +143,9 @@ const getByIdFromDB = async (id: string) => {
 
   return result;
 };
+
 const updateByIdIntoDB = (id: string, req: Request) => {};
+
 const softDeleteByIdFromDB = async (id: string) => {
   const isProductExists = await prisma.product.findUniqueOrThrow({
     where: {
