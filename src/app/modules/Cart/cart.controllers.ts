@@ -2,10 +2,12 @@ import status from "http-status";
 import catchAsync from "../../../utils/share/catchAsync";
 import sendResponse from "../../../utils/share/sendResponse";
 import { CartServices } from "./cart.services";
+import { JwtPayload } from "jsonwebtoken";
 
 
 const createDataIntoDB = catchAsync(async (req, res) => {
-  const result = await CartServices.createDataIntoDB();
+  const user = req.user
+  const result = await CartServices.createDataIntoDB(user as JwtPayload , req.body);
 
   sendResponse(res, {
     statusCode: status.OK,
